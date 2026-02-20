@@ -53,6 +53,31 @@
             align-items: center;
             justify-content: center;
         }
+        .page-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+            background: #eaf1f9;
+            padding: 6px;
+            border-radius: 60px;
+        }
+        .page-toggle button {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 12px 10px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 1rem;
+            color: #2b4d6a;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .page-toggle button.active {
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,30,50,0.1);
+            color: #104c77;
+        }
         .fortnight-badge {
             font-size: 0.9rem;
             background: #d7e7ff;
@@ -100,11 +125,6 @@
         .btn-outline:hover {
             background: #e3edf5;
         }
-        .btn-outline.accent {
-            background: #1b3d5c;
-            border-color: #143649;
-            color: white;
-        }
         .reset-btn {
             background: none;
             border: 1px solid #cbd5e1;
@@ -118,6 +138,7 @@
         .reset-btn:hover {
             background: #eef2f6;
         }
+        /* categories grid */
         .category-grid {
             display: flex;
             flex-direction: column;
@@ -429,6 +450,84 @@
         .new-cat-row button:hover {
             background: #0f3a57;
         }
+        /* income & bills page */
+        .summary-card {
+            background: linear-gradient(145deg, #e7f0fa, #ffffff);
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 22px;
+            border: 1px solid #c9ddec;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #19415b;
+            padding: 8px 0;
+        }
+        .summary-row.remaining {
+            border-top: 2px dashed #aac3db;
+            margin-top: 10px;
+            padding-top: 16px;
+            font-size: 1.5rem;
+            color: #1a4d3e;
+        }
+        .income-list, .bills-list {
+            margin-bottom: 28px;
+        }
+        .income-item, .bill-item {
+            background: #f1f8ff;
+            border-radius: 40px;
+            padding: 14px 20px;
+            margin-bottom: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #d3e2f2;
+        }
+        .bill-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            align-items: center;
+        }
+        .bill-frequency {
+            background: #d9e4f0;
+            border-radius: 40px;
+            padding: 4px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1d4c73;
+        }
+        .bill-next {
+            background: #fdefd4;
+            border-radius: 40px;
+            padding: 4px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #9a6100;
+        }
+        .income-amount, .bill-amount {
+            font-weight: 700;
+            color: #1a3f5c;
+        }
+        .add-bill-form {
+            background: #f3f9ff;
+            border-radius: 30px;
+            padding: 22px 16px;
+            margin: 20px 0 10px;
+        }
+        .inline-delete {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: #9fadbc;
+            cursor: pointer;
+            padding: 0 6px;
+        }
+        .inline-delete:hover { color: #b12626; }
     </style>
 </head>
 <body>
@@ -438,105 +537,142 @@
             <span class="dollar-logo">$</span>
             Expense tracker
         </h1>
-        <div class="fortnight-badge">
-            <span>⏳ fortnight</span>
-            <strong>{{fortnightStart}}</strong> · <span>to</span> <strong>{{fortnightEnd}}</strong>
+        <!-- page toggle: expenses / income+bills -->
+        <div class="page-toggle">
+            <button :class="{ active: currentPage === 'expenses' }" @click="currentPage = 'expenses'">📊 Expenses</button>
+            <button :class="{ active: currentPage === 'income' }" @click="currentPage = 'income'">💰 Income & Bills</button>
+        </div>
+        <div class="fortnight-badge" v-if="currentPage === 'expenses'">
+            <span>⏳ fortnight</span> <strong>Feb 24</strong> · <span>to</span> <strong>Mar 10</strong>
+        </div>
+        <div class="fortnight-badge" v-else>
+            <span>📅 upcoming bills</span> <strong>{{ nextBillReminder }}</strong>
         </div>
     </div>
 
-    <!-- categories & budgets + edit tools -->
-    <div class="card">
-        <div class="budget-header">
-            <h2>📁 categories</h2>
-            <div class="header-actions">
-                <button class="btn-outline" @click="addNewCategoryPrompt">➕ add category</button>
-                <button class="reset-btn" @click="resetFortnight">↻ reset fortnight</button>
+    <!-- EXPENSES PAGE -->
+    <div v-if="currentPage === 'expenses'">
+        <div class="card">
+            <div class="budget-header">
+                <h2>📁 categories</h2>
+                <div class="header-actions">
+                    <button class="btn-outline" @click="addNewCategoryPrompt">➕ add category</button>
+                    <button class="reset-btn" @click="resetFortnight">↻ reset fortnight</button>
+                </div>
+            </div>
+            <div class="category-grid">
+                <div v-for="(cat, idx) in categories" :key="cat.id" class="category-row">
+                    <div class="cat-info">
+                        <div class="cat-name-wrapper">
+                            <input type="text" class="cat-name" v-model="cat.name" @input="updateStorage" placeholder="name">
+                            <button class="delete-cat" @click="removeCategory(cat.id, idx)" title="delete category">✕</button>
+                        </div>
+                        <div class="cat-budget"><span>$</span><input type="number" min="0" step="1" v-model.number="cat.budget" @input="updateStorage" placeholder="budget"></div>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-bar-bg"><div class="progress-fill" :style="{ width: progressPercent(cat) }"></div></div>
+                        <span class="cat-spent">${{ cat.spent }}</span>
+                        <span class="cat-left" :class="{ 'left-warning': cat.budget - cat.spent < 0 }">${{ cat.budget - cat.spent }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="new-cat-row">
+                <input type="text" v-model="newCategoryName" placeholder="new category name" @keyup.enter="commitNewCategory">
+                <button @click="commitNewCategory">➕ add</button>
+            </div>
+
+            <div class="add-purchase">
+                <div class="form-row">
+                    <div class="form-field"><span>📦</span><input type="text" v-model="newPurchase.description" placeholder="item name" @keyup.enter="addPurchase"></div>
+                    <div class="form-field"><span>$</span><input type="number" min="0" step="0.01" v-model.number="newPurchase.amount" placeholder="0" @keyup.enter="addPurchase"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-field"><span>📂</span>
+                        <select v-model="newPurchase.categoryId">
+                            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                        </select>
+                    </div>
+                    <div class="who-group">
+                        <button type="button" class="who-option" :class="{ active: newPurchase.who === 'Jordon' }" @click="newPurchase.who = 'Jordon'">👨 Jordon</button>
+                        <button type="button" class="who-option" :class="{ active: newPurchase.who === 'Tiffany' }" @click="newPurchase.who = 'Tiffany'">👩 Tiffany</button>
+                    </div>
+                </div>
+                <button class="add-btn" @click="addPurchase">+ add purchase</button>
             </div>
         </div>
 
-        <!-- editable category list -->
-        <div class="category-grid">
-            <div v-for="(cat, idx) in categories" :key="cat.id" class="category-row">
-                <div class="cat-info">
-                    <div class="cat-name-wrapper">
-                        <input type="text" class="cat-name" v-model="cat.name" @input="updateStorage" placeholder="name">
-                        <button class="delete-cat" @click="removeCategory(cat.id, idx)" title="delete category">✕</button>
+        <div class="card">
+            <div class="history-title"><span>📋 purchases this fortnight</span><span>{{ purchases.length }} items</span></div>
+            <ul class="purchase-list" v-if="purchases.length">
+                <li v-for="(p, index) in sortedPurchases" :key="p.id" class="purchase-item">
+                    <div class="purchase-left">
+                        <span class="purchase-cat">{{ categoryName(p.categoryId) }}</span>
+                        <span class="purchase-who">{{ p.who === 'Jordon' ? '👨 Jordon' : '👩 Tiffany' }}</span>
+                        <span class="purchase-name">{{ p.description }}</span>
                     </div>
-                    <div class="cat-budget">
-                        <span>$</span>
-                        <input type="number" min="0" step="1" v-model.number="cat.budget" @input="updateStorage" placeholder="budget">
-                    </div>
-                </div>
-                <div class="progress-section">
-                    <div class="progress-bar-bg">
-                        <div class="progress-fill" :style="{ width: progressPercent(cat) }"></div>
-                    </div>
-                    <span class="cat-spent">${{ cat.spent }}</span>
-                    <span class="cat-left" :class="{ 'left-warning': cat.budget - cat.spent < 0 }">${{ cat.budget - cat.spent }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- quick add new category (inline) -->
-        <div class="new-cat-row">
-            <input type="text" v-model="newCategoryName" placeholder="new category name (e.g. 'pets')" @keyup.enter="commitNewCategory">
-            <button @click="commitNewCategory">➕ add</button>
-        </div>
-
-        <!-- add purchase form with Jordon & Tiffany -->
-        <div class="add-purchase">
-            <div class="form-row">
-                <div class="form-field">
-                    <span>📦</span>
-                    <input type="text" v-model="newPurchase.description" placeholder="item name" @keyup.enter="addPurchase">
-                </div>
-                <div class="form-field">
-                    <span>$</span>
-                    <input type="number" min="0" step="0.01" v-model.number="newPurchase.amount" placeholder="0" @keyup.enter="addPurchase">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-field">
-                    <span>📂</span>
-                    <select v-model="newPurchase.categoryId">
-                        <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                    </select>
-                </div>
-                <!-- who bought? JORDON / TIFFANY -->
-                <div class="who-group">
-                    <button type="button" class="who-option" :class="{ active: newPurchase.who === 'Jordon' }" @click="newPurchase.who = 'Jordon'">👨 Jordon</button>
-                    <button type="button" class="who-option" :class="{ active: newPurchase.who === 'Tiffany' }" @click="newPurchase.who = 'Tiffany'">👩 Tiffany</button>
-                </div>
-            </div>
-            <button class="add-btn" @click="addPurchase">+ add purchase</button>
+                    <div><span class="purchase-amount">${{ p.amount.toFixed(2) }}</span><button class="delete-btn" @click="deletePurchase(index, p.id)">✕</button></div>
+                </li>
+            </ul>
+            <div v-else style="text-align: center; padding: 32px; color: #8fa3b7;">✨ purchases show up here</div>
         </div>
     </div>
 
-    <!-- recent purchases -->
-    <div class="card" style="padding-top: 16px;">
-        <div class="history-title">
-            <span>📋 purchases this fortnight</span>
-            <span>{{ purchases.length }} items</span>
+    <!-- INCOME & BILLS PAGE -->
+    <div v-else>
+        <div class="card">
+            <div class="summary-card">
+                <div class="summary-row"><span>💰 Fortnightly income:</span> <span>${{ totalIncome }}</span></div>
+                <div class="summary-row"><span>📅 Fortnightly bills:</span> <span>${{ totalBillsFortnight }}</span></div>
+                <div class="summary-row remaining"><span>✅ Left over:</span> <span>${{ totalIncome - totalBillsFortnight }}</span></div>
+            </div>
+
+            <h2 style="margin-bottom: 12px;">➕ Income sources</h2>
+            <div class="income-list">
+                <div v-for="(inc, idx) in incomeSources" :key="inc.id" class="income-item">
+                    <span><strong>{{ inc.name }}</strong> (every fortnight)</span>
+                    <div><span class="income-amount">${{ inc.amount }}</span><button class="inline-delete" @click="deleteIncome(idx)">✕</button></div>
+                </div>
+                <div style="margin-top: 16px; display: flex; gap: 8px;">
+                    <input type="text" v-model="newIncome.name" placeholder="name (e.g. salary)" style="flex:2; padding: 12px; border-radius: 40px; border:1px solid #cbddee;">
+                    <input type="number" v-model="newIncome.amount" placeholder="amount" style="flex:1; padding: 12px; border-radius: 40px; border:1px solid #cbddee;">
+                    <button class="btn-outline" @click="addIncome" style="white-space: nowrap;">add</button>
+                </div>
+            </div>
+
+            <h2 style="margin: 24px 0 12px;">📋 Bills</h2>
+            <div class="bills-list">
+                <div v-for="(bill, idx) in bills" :key="bill.id" class="bill-item">
+                    <div class="bill-details">
+                        <strong>{{ bill.name }}</strong>
+                        <span class="bill-frequency">{{ bill.frequency }}</span>
+                        <span class="bill-next">next: {{ bill.nextDate }}</span>
+                    </div>
+                    <div><span class="bill-amount">${{ bill.amount }}</span><button class="inline-delete" @click="deleteBill(idx)">✕</button></div>
+                </div>
+            </div>
+
+            <div class="add-bill-form">
+                <h3 style="margin-bottom: 18px;">➕ Add new bill</h3>
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                    <input type="text" v-model="newBill.name" placeholder="Bill name (e.g. rent, internet)" style="padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
+                    <input type="number" v-model="newBill.amount" placeholder="Amount $" style="padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select v-model="newBill.frequency" style="flex:1; padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
+                            <option value="fortnightly">Fortnightly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                        <input type="date" v-model="newBill.nextDate" style="flex:1; padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
+                    </div>
+                    <button class="add-btn" @click="addBill" style="margin-top: 8px;">+ add bill</button>
+                </div>
+            </div>
+            <p style="color: #7f99b3; font-size:0.9rem; margin-top:12px;">Monthly bills are converted to fortnightly for the leftover calculation.</p>
         </div>
-        <ul class="purchase-list" v-if="purchases.length">
-            <li v-for="(p, index) in sortedPurchases" :key="p.id" class="purchase-item">
-                <div class="purchase-left">
-                    <span class="purchase-cat">{{ categoryName(p.categoryId) }}</span>
-                    <span class="purchase-who">{{ p.who === 'Jordon' ? '👨 Jordon' : '👩 Tiffany' }}</span>
-                    <span class="purchase-name">{{ p.description }}</span>
-                </div>
-                <div style="display: flex; align-items: center;">
-                    <span class="purchase-amount">${{ p.amount.toFixed(2) }}</span>
-                    <button class="delete-btn" @click="deletePurchase(index, p.id)">✕</button>
-                </div>
-            </li>
-        </ul>
-        <div v-else style="text-align: center; padding: 32px 10px; color: #8fa3b7;">✨ purchases will show up here</div>
     </div>
+
     <div class="footer-note">Jordon & Tiffany · data stays in browser</div>
 </div>
 
-<!-- Vue & logic -->
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 <script>
     const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
@@ -551,227 +687,148 @@
 
     const app = createApp({
         setup() {
-            // reactive state
+            const currentPage = ref('expenses'); // 'expenses' or 'income'
+
+            // categories & purchases
             const categories = ref([]);
             const purchases = ref([]);
             const newPurchase = reactive({
-                description: '',
-                amount: null,
-                categoryId: '',
-                who: 'Jordon'      // 👈 Jordon / Tiffany
+                description: '', amount: null, categoryId: '', who: 'Jordon'
             });
             const newCategoryName = ref('');
 
-            // ---------- fixed fortnight start: tuesday 24th feb 2026 (arbitrary year, but keep same date)
-            // we want start = Feb 24 (always shown as "Feb 24" and end = Mar 10 (14 days later)
-            const fortnightStartDisplay = 'Feb 24';
-            const fortnightEndDisplay = 'Mar 10';
+            // income & bills
+            const incomeSources = ref([]);
+            const bills = ref([]);
+            const newIncome = reactive({ name: '', amount: null });
+            const newBill = reactive({ name: '', amount: null, frequency: 'monthly', nextDate: '' });
 
-            // ---------- helpers ----------
+            // static fortnight display
+            const fortnightStart = 'Feb 24';
+            const fortnightEnd = 'Mar 10';
+
+            // ---- helpers ----
             function saveToLocal() {
                 localStorage.setItem('expense_categories', JSON.stringify(categories.value));
                 localStorage.setItem('expense_purchases', JSON.stringify(purchases.value));
+                localStorage.setItem('income_sources', JSON.stringify(incomeSources.value));
+                localStorage.setItem('bills_list', JSON.stringify(bills.value));
             }
 
             function loadFromLocal() {
-                const savedCats = localStorage.getItem('expense_categories');
-                const savedPurchases = localStorage.getItem('expense_purchases');
-                if (savedCats) {
-                    try {
-                        const parsed = JSON.parse(savedCats);
-                        if (Array.isArray(parsed) && parsed.length) {
-                            categories.value = parsed.map(c => ({ ...c, spent: c.spent || 0 }));
-                        } else {
-                            categories.value = defaultCategories.map(c => ({ ...c }));
-                        }
-                    } catch (e) {
-                        categories.value = defaultCategories.map(c => ({ ...c }));
-                    }
-                } else {
-                    categories.value = defaultCategories.map(c => ({ ...c }));
-                }
+                categories.value = JSON.parse(localStorage.getItem('expense_categories')) || defaultCategories.map(c => ({...c}));
+                purchases.value = JSON.parse(localStorage.getItem('expense_purchases')) || [];
+                incomeSources.value = JSON.parse(localStorage.getItem('income_sources')) || [];
+                bills.value = JSON.parse(localStorage.getItem('bills_list')) || [];
 
-                if (savedPurchases) {
-                    try {
-                        purchases.value = JSON.parse(savedPurchases);
-                    } catch (e) {
-                        purchases.value = [];
-                    }
-                } else {
-                    purchases.value = [];
-                }
-
-                // make sure first category is selected in form
-                if (categories.value.length > 0 && !newPurchase.categoryId) {
-                    newPurchase.categoryId = categories.value[0].id;
-                }
+                categories.value.forEach(c => { if (c.spent === undefined) c.spent = 0; });
+                if (categories.value.length && !newPurchase.categoryId) newPurchase.categoryId = categories.value[0].id;
             }
 
-            // recalc spent from purchases (fortnight)
             function recalcSpent() {
                 categories.value.forEach(c => c.spent = 0);
                 purchases.value.forEach(p => {
                     const cat = categories.value.find(c => c.id === p.categoryId);
-                    if (cat) {
-                        cat.spent = (cat.spent || 0) + p.amount;
-                    }
+                    if (cat) cat.spent += p.amount;
                 });
                 saveToLocal();
             }
 
-            // add purchase
+            // expenses functions
             function addPurchase() {
-                const desc = newPurchase.description.trim();
-                const amount = newPurchase.amount;
-                if (!desc) {
-                    alert('please enter a description');
-                    return;
-                }
-                if (!amount || amount <= 0) {
-                    alert('enter a valid amount (>0)');
-                    return;
-                }
-                if (!newPurchase.categoryId || !categories.value.find(c => c.id === newPurchase.categoryId)) {
-                    alert('please select a category');
-                    return;
-                }
-
-                const purchase = {
-                    id: Date.now() + '-' + Math.random().toString(36).substring(2, 8),
-                    description: desc,
-                    amount: Number(amount),
+                if (!newPurchase.description.trim() || !newPurchase.amount || newPurchase.amount <= 0) return alert('Valid description and amount');
+                purchases.value.push({
+                    id: Date.now()+'-'+Math.random().toString(36).substring(2,8),
+                    description: newPurchase.description.trim(),
+                    amount: Number(newPurchase.amount),
                     categoryId: newPurchase.categoryId,
                     who: newPurchase.who,
                     timestamp: Date.now()
-                };
-                purchases.value.push(purchase);
-                // reset form
-                newPurchase.description = '';
-                newPurchase.amount = null;
-                // keep same category & who
+                });
+                newPurchase.description = ''; newPurchase.amount = null;
                 recalcSpent();
             }
-
-            function deletePurchase(index, id) {
-                purchases.value.splice(index, 1);
-                recalcSpent();
-            }
-
-            function resetFortnight() {
-                if (confirm('Clear ALL purchases and reset spent amounts? Budgets and category names stay unchanged.')) {
-                    purchases.value = [];
-                    recalcSpent();
-                }
-            }
-
-            function updateStorage() {
-                saveToLocal(); // budgets / names changed
-            }
-
-            // category management
-            function addNewCategoryPrompt() {
-                const name = prompt('Enter new category name:', 'new');
-                if (name && name.trim()) {
-                    addCategory(name.trim());
-                }
-            }
-
+            function deletePurchase(index) { purchases.value.splice(index, 1); recalcSpent(); }
+            function resetFortnight() { if (confirm('Clear purchases?')) { purchases.value = []; recalcSpent(); } }
+            function addNewCategoryPrompt() { let n = prompt('Category name:'); if (n && n.trim()) addCategory(n.trim()); }
             function addCategory(name) {
-                const newId = 'cat_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
-                const newCat = {
-                    id: newId,
-                    name: name,
-                    budget: 50,
-                    spent: 0
-                };
-                categories.value.push(newCat);
-                if (categories.value.length === 1) newPurchase.categoryId = newCat.id;
+                categories.value.push({ id: 'cat_'+Date.now()+'_'+Math.random().toString(36).substring(2,6), name, budget: 50, spent: 0 });
+                if (categories.value.length===1) newPurchase.categoryId = categories.value[0].id;
                 saveToLocal();
             }
-
-            function commitNewCategory() {
-                const name = newCategoryName.value.trim();
-                if (name) {
-                    addCategory(name);
-                    newCategoryName.value = '';
-                } else {
-                    alert('enter a name');
-                }
-            }
-
-            function removeCategory(catId, index) {
-                if (categories.value.length <= 1) {
-                    alert('keep at least one category');
-                    return;
-                }
-                // check if any purchase uses this category
-                const used = purchases.value.some(p => p.categoryId === catId);
-                if (used) {
-                    if (!confirm('This category has purchases. Delete anyway? (purchases will be removed)')) return;
-                    // delete purchases with that category
-                    purchases.value = purchases.value.filter(p => p.categoryId !== catId);
-                }
-                categories.value.splice(index, 1);
-                // if selected category removed, update form selection
-                if (!categories.value.find(c => c.id === newPurchase.categoryId)) {
-                    newPurchase.categoryId = categories.value[0]?.id || '';
-                }
-                recalcSpent(); // also saves
-            }
-
-            // computed dates (static per request)
-            const fortnightStart = computed(() => fortnightStartDisplay);
-            const fortnightEnd = computed(() => fortnightEndDisplay);
-
-            function progressPercent(cat) {
-                if (cat.budget <= 0) return '0%';
-                const percent = (cat.spent / cat.budget) * 100;
-                return Math.min(percent, 100) + '%';
-            }
-
-            function categoryName(catId) {
-                const cat = categories.value.find(c => c.id === catId);
-                return cat ? cat.name : '?';
-            }
-
-            const sortedPurchases = computed(() => {
-                return [...purchases.value].sort((a,b) => b.timestamp - a.timestamp);
-            });
-
-            // initial load & watchers
-            onMounted(() => {
-                loadFromLocal();
+            function commitNewCategory() { if (newCategoryName.value.trim()) { addCategory(newCategoryName.value.trim()); newCategoryName.value = ''; } }
+            function removeCategory(catId, idx) {
+                if (categories.value.length <= 1) return alert('Keep at least one');
+                if (purchases.value.some(p => p.categoryId === catId) && !confirm('Category has purchases. Delete?')) return;
+                purchases.value = purchases.value.filter(p => p.categoryId !== catId);
+                categories.value.splice(idx, 1);
+                if (!categories.value.find(c => c.id === newPurchase.categoryId)) newPurchase.categoryId = categories.value[0]?.id || '';
                 recalcSpent();
-                if (categories.value.length > 0 && !newPurchase.categoryId) {
-                    newPurchase.categoryId = categories.value[0].id;
-                }
+            }
+            function updateStorage() { saveToLocal(); }
+            function progressPercent(cat) { return cat.budget<=0 ? '0%' : Math.min((cat.spent/cat.budget)*100,100)+'%'; }
+            function categoryName(catId) { return categories.value.find(c=>c.id===catId)?.name || '?'; }
+            const sortedPurchases = computed(() => [...purchases.value].sort((a,b)=>b.timestamp - a.timestamp));
+
+            // income functions
+            function addIncome() {
+                if (!newIncome.name.trim() || !newIncome.amount || newIncome.amount <=0) return alert('Valid name and amount');
+                incomeSources.value.push({ id: Date.now()+'-'+Math.random().toString(36).substring(2,6), name: newIncome.name.trim(), amount: Number(newIncome.amount) });
+                newIncome.name = ''; newIncome.amount = null;
+                saveToLocal();
+            }
+            function deleteIncome(idx) { incomeSources.value.splice(idx,1); saveToLocal(); }
+            const totalIncome = computed(() => incomeSources.value.reduce((sum,i)=> sum + i.amount, 0));
+
+            // bills functions
+            function addBill() {
+                if (!newBill.name.trim() || !newBill.amount || newBill.amount <=0 || !newBill.nextDate) return alert('Complete all fields');
+                bills.value.push({
+                    id: Date.now()+'-'+Math.random().toString(36).substring(2,6),
+                    name: newBill.name.trim(),
+                    amount: Number(newBill.amount),
+                    frequency: newBill.frequency,
+                    nextDate: newBill.nextDate
+                });
+                newBill.name = ''; newBill.amount = null; newBill.frequency = 'monthly'; newBill.nextDate = '';
+                saveToLocal();
+            }
+            function deleteBill(idx) { bills.value.splice(idx,1); saveToLocal(); }
+
+            // total bills per fortnight (monthly * 12 / 26)
+            const totalBillsFortnight = computed(() => {
+                return bills.value.reduce((sum, b) => {
+                    if (b.frequency === 'fortnightly') return sum + b.amount;
+                    else return sum + (b.amount * 12 / 26); // monthly to fortnightly
+                }, 0);
             });
 
-            watch([categories, purchases], () => {
-                saveToLocal();
-            }, { deep: true });
+            // next bill reminder
+            const nextBillReminder = computed(() => {
+                if (!bills.value.length) return 'no bills';
+                const today = new Date();
+                let nearest = null;
+                bills.value.forEach(b => {
+                    const d = new Date(b.nextDate);
+                    if (!isNaN(d) && (!nearest || d < nearest)) nearest = d;
+                });
+                return nearest ? nearest.toLocaleDateString('en-US',{month:'short', day:'numeric'}) : 'add dates';
+            });
+
+            onMounted(() => { loadFromLocal(); recalcSpent(); });
+            watch([categories, purchases, incomeSources, bills], saveToLocal, { deep: true });
 
             return {
-                categories,
-                purchases,
-                newPurchase,
-                newCategoryName,
-                fortnightStart,
-                fortnightEnd,
-                addPurchase,
-                deletePurchase,
-                resetFortnight,
-                updateStorage,
-                progressPercent,
-                categoryName,
-                sortedPurchases,
-                addNewCategoryPrompt,
-                commitNewCategory,
-                removeCategory
+                currentPage, categories, purchases, newPurchase, newCategoryName,
+                incomeSources, bills, newIncome, newBill,
+                fortnightStart, fortnightEnd,
+                addPurchase, deletePurchase, resetFortnight, addNewCategoryPrompt,
+                commitNewCategory, removeCategory, updateStorage, progressPercent,
+                categoryName, sortedPurchases, addIncome, deleteIncome, totalIncome,
+                addBill, deleteBill, totalBillsFortnight, nextBillReminder
             };
         }
     });
-
     app.mount('#app');
 </script>
 </body>
