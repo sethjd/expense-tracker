@@ -5,32 +5,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Expense tracker · John + Jane</title>
     <style>
-        /* styles from previous version + calendar popup */
-        * {
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
+        /* Dark mode variables - light theme default */
+        :root {
+            --bg-primary: #f4f7fb;
+            --bg-card: white;
+            --text-primary: #0b2a3c;
+            --text-secondary: #16394e;
+            --badge-bg: #d7e7ff;
+            --badge-text: #035388;
+            --border-light: #f0f2f5;
+            --category-bg: #f9fcff;
+            --category-border: #dee7ef;
+            --input-bg: #f2f7fd;
+            --input-border: #c1d9ec;
+            --progress-bg: #dce5ed;
+            --progress-fill: #1d7eb5;
+            --btn-outline: #b7ccdd;
+            --btn-outline-text: #1d3b50;
+            --who-bg: #f2f7fd;
+            --who-border: #c1d9ec;
+            --who-active: #1e4e72;
+            --who-active-text: white;
+            --purchase-bg: #f8fafd;
+            --purchase-border: #e2eaf2;
+            --purchase-cat: #daeaf5;
+            --purchase-who: #e1d7fc;
+            --delete-btn: #9fadbc;
+            --footer-text: #7d93aa;
+            --summary-bg: linear-gradient(145deg, #e7f0fa, #ffffff);
+            --summary-border: #c9ddec;
+            --bill-bg: #f1f8ff;
+            --bill-border: #d3e2f2;
+            --bill-frequency: #d9e4f0;
+            --bill-next: #fdefd4;
+            --calendar-overlay: rgba(0,20,40,0.5);
+            --calendar-panel: white;
+            --calendar-item: #f1f8ff;
+            --calendar-border: #c5d9ef;
         }
+
+        /* Dark theme overrides */
+        body.dark-mode {
+            --bg-primary: #1a2634;
+            --bg-card: #2a3747;
+            --text-primary: #e6edf5;
+            --text-secondary: #c9ddec;
+            --badge-bg: #2d4b6e;
+            --badge-text: #c9e2ff;
+            --border-light: #3a4a5e;
+            --category-bg: #2f4053;
+            --category-border: #4a5e74;
+            --input-bg: #33465b;
+            --input-border: #5a6f88;
+            --progress-bg: #3f556b;
+            --progress-fill: #4a9fd8;
+            --btn-outline: #5a6f88;
+            --btn-outline-text: #d9e6f2;
+            --who-bg: #33465b;
+            --who-border: #5a6f88;
+            --who-active: #3a6e9f;
+            --who-active-text: white;
+            --purchase-bg: #2f4053;
+            --purchase-border: #4a5e74;
+            --purchase-cat: #3d5a7a;
+            --purchase-who: #5d4f7a;
+            --delete-btn: #8a9bb0;
+            --footer-text: #9aafc9;
+            --summary-bg: linear-gradient(145deg, #2d4055, #2a3747);
+            --summary-border: #4a5e74;
+            --bill-bg: #2f4053;
+            --bill-border: #4a5e74;
+            --bill-frequency: #3d5a7a;
+            --bill-next: #7d6a45;
+            --calendar-overlay: rgba(0,0,0,0.7);
+            --calendar-panel: #2a3747;
+            --calendar-item: #2f4053;
+            --calendar-border: #4a5e74;
+        }
+
         body {
-            background: #f4f7fb;
+            background: var(--bg-primary);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             padding: 16px 8px 40px;
+            transition: background-color 0.3s, color 0.2s;
+            margin: 0;
         }
         .app {
             max-width: 600px;
             width: 100%;
         }
         .card {
-            background: white;
+            background: var(--bg-card);
             border-radius: 28px;
             box-shadow: 0 8px 24px rgba(0,10,30,0.08);
             padding: 24px 20px;
             margin-bottom: 20px;
             transition: 0.2s;
-            border: 1px solid #f0f2f5;
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
         }
         h1 {
             font-size: 2rem;
@@ -39,7 +113,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            color: #0b2a3c;
+            color: var(--text-primary);
             margin-bottom: 6px;
         }
         .dollar-logo {
@@ -54,11 +128,15 @@
             align-items: center;
             justify-content: center;
         }
+        .dark-mode .dollar-logo {
+            background: #3a5a7a;
+            color: #c9e2ff;
+        }
         .page-toggle {
             display: flex;
             gap: 8px;
             margin-bottom: 18px;
-            background: #eaf1f9;
+            background: var(--input-bg);
             padding: 6px;
             border-radius: 60px;
         }
@@ -70,19 +148,19 @@
             border-radius: 40px;
             font-weight: 600;
             font-size: 1rem;
-            color: #2b4d6a;
+            color: var(--text-secondary);
             cursor: pointer;
             transition: 0.15s;
         }
         .page-toggle button.active {
-            background: white;
+            background: var(--bg-card);
             box-shadow: 0 4px 10px rgba(0,30,50,0.1);
-            color: #104c77;
+            color: var(--text-primary);
         }
         .fortnight-badge {
             font-size: 0.9rem;
-            background: #d7e7ff;
-            color: #035388;
+            background: var(--badge-bg);
+            color: var(--badge-text);
             padding: 8px 14px;
             border-radius: 40px;
             font-weight: 500;
@@ -94,14 +172,14 @@
             transition: 0.2s;
         }
         .fortnight-badge:hover {
-            background: #c2d9f5;
+            filter: brightness(0.95);
             transform: scale(1.02);
         }
         /* calendar popup */
         .calendar-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,20,40,0.5);
+            background: var(--calendar-overlay);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -109,14 +187,15 @@
             backdrop-filter: blur(3px);
         }
         .calendar-panel {
-            background: white;
+            background: var(--calendar-panel);
             border-radius: 40px;
             max-width: 500px;
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
             padding: 28px 22px;
-            box-shadow: 0 30px 60px rgba(0,30,60,0.4);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            color: var(--text-primary);
         }
         .calendar-header {
             display: flex;
@@ -125,14 +204,14 @@
             margin-bottom: 22px;
             font-size: 1.5rem;
             font-weight: 600;
-            color: #123b5a;
+            color: var(--text-primary);
         }
         .close-btn {
             background: none;
             border: none;
             font-size: 2rem;
             cursor: pointer;
-            color: #6e8faf;
+            color: var(--delete-btn);
             padding: 0 12px;
         }
         .calendar-list {
@@ -141,13 +220,13 @@
             gap: 12px;
         }
         .calendar-item {
-            background: #f1f8ff;
+            background: var(--calendar-item);
             border-radius: 60px;
             padding: 16px 22px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border: 1px solid #c5d9ef;
+            border: 1px solid var(--calendar-border);
         }
         .cal-bill-info {
             display: flex;
@@ -156,24 +235,24 @@
         }
         .cal-bill-name {
             font-weight: 700;
-            color: #113750;
+            color: var(--text-primary);
         }
         .cal-bill-meta {
             font-size: 0.8rem;
-            color: #456f94;
+            color: var(--footer-text);
             display: flex;
             gap: 10px;
         }
         .cal-bill-amount {
             font-weight: 700;
-            color: #1c4d7a;
-            background: #ddeeff;
+            color: var(--text-primary);
+            background: var(--badge-bg);
             padding: 6px 16px;
             border-radius: 40px;
         }
         .future-tag {
-            background: #d9e6b5;
-            color: #3f5c1a;
+            background: #5f7a4c;
+            color: #e2f0c0;
             padding: 2px 12px;
             border-radius: 30px;
             font-size: 0.7rem;
@@ -183,7 +262,7 @@
         .no-bills-cal {
             padding: 40px;
             text-align: center;
-            color: #7d9bbf;
+            color: var(--footer-text);
         }
         .budget-header {
             display: flex;
@@ -196,7 +275,7 @@
         .budget-header h2 {
             font-size: 1.4rem;
             font-weight: 550;
-            color: #16394e;
+            color: var(--text-secondary);
         }
         .header-actions {
             display: flex;
@@ -205,12 +284,12 @@
         }
         .btn-outline {
             background: none;
-            border: 1px solid #b7ccdd;
+            border: 1px solid var(--btn-outline);
             padding: 8px 16px;
             border-radius: 40px;
             font-size: 0.9rem;
             font-weight: 500;
-            color: #1d3b50;
+            color: var(--btn-outline-text);
             cursor: pointer;
             transition: 0.15s;
             display: inline-flex;
@@ -218,25 +297,28 @@
             gap: 6px;
         }
         .btn-outline:hover {
-            background: #e3edf5;
+            background: var(--input-bg);
         }
         .btn-outline.accent {
             background: #1b3d5c;
             border-color: #143649;
             color: white;
         }
+        .dark-mode .btn-outline.accent {
+            background: #2d557a;
+        }
         .reset-btn {
             background: none;
-            border: 1px solid #cbd5e1;
+            border: 1px solid var(--btn-outline);
             padding: 8px 16px;
             border-radius: 40px;
             font-size: 0.9rem;
             font-weight: 500;
-            color: #2c3e4f;
+            color: var(--btn-outline-text);
             cursor: pointer;
         }
         .reset-btn:hover {
-            background: #eef2f6;
+            background: var(--input-bg);
         }
         .export-import {
             display: flex;
@@ -245,18 +327,18 @@
             flex-wrap: wrap;
         }
         .export-import button {
-            background: #e6effa;
-            border: 1px solid #b1cbe2;
+            background: var(--input-bg);
+            border: 1px solid var(--btn-outline);
             border-radius: 40px;
             padding: 10px 20px;
             font-weight: 500;
-            color: #1b4e79;
+            color: var(--btn-outline-text);
             cursor: pointer;
             flex: 1;
             font-size: 0.95rem;
         }
         .export-import button:hover {
-            background: #d2e2f5;
+            background: var(--category-bg);
         }
         .category-grid {
             display: flex;
@@ -265,10 +347,10 @@
             margin: 24px 0 16px;
         }
         .category-row {
-            background: #f9fcff;
+            background: var(--category-bg);
             border-radius: 24px;
             padding: 14px 18px;
-            border: 1px solid #dee7ef;
+            border: 1px solid var(--category-border);
             display: flex;
             flex-wrap: wrap;
             align-items: center;
@@ -288,9 +370,9 @@
         }
         .cat-name {
             font-weight: 600;
-            color: #1e3b4f;
+            color: var(--text-primary);
             background: transparent;
-            border: 1px dashed #9cb8d3;
+            border: 1px dashed var(--btn-outline);
             border-radius: 30px;
             padding: 5px 12px;
             font-size: 0.95rem;
@@ -299,14 +381,14 @@
         .cat-name:focus {
             outline: 2px solid #3670a8;
             border-color: #3670a8;
-            background: white;
+            background: var(--input-bg);
         }
         .delete-cat {
             background: none;
             border: none;
             font-size: 1.2rem;
             cursor: pointer;
-            color: #9fadbc;
+            color: var(--delete-btn);
             padding: 0 4px;
             border-radius: 30px;
         }
@@ -315,12 +397,12 @@
             background: #ffe3e3;
         }
         .cat-budget {
-            background: #e3eef9;
+            background: var(--badge-bg);
             border-radius: 30px;
             padding: 5px 12px;
             font-size: 0.9rem;
             font-weight: 500;
-            color: #11517c;
+            color: var(--badge-text);
             display: flex;
             align-items: center;
             gap: 6px;
@@ -331,9 +413,9 @@
             background: transparent;
             font-weight: 600;
             font-size: 0.95rem;
-            color: #0a3142;
+            color: var(--text-primary);
             padding: 4px 0 4px 6px;
-            border-bottom: 1.5px dashed #7fa3c2;
+            border-bottom: 1.5px dashed var(--btn-outline);
         }
         .cat-budget input:focus {
             outline: none;
@@ -347,7 +429,7 @@
             gap: 10px;
         }
         .progress-bar-bg {
-            background: #dce5ed;
+            background: var(--progress-bg);
             height: 10px;
             border-radius: 20px;
             flex: 1 1 120px;
@@ -356,12 +438,12 @@
         .progress-fill {
             height: 10px;
             border-radius: 20px;
-            background: #1d7eb5;
+            background: var(--progress-fill);
             width: 0%;
         }
         .cat-spent {
             font-weight: 550;
-            color: #2a4f6e;
+            color: var(--text-secondary);
             min-width: 70px;
             text-align: right;
             font-size: 0.95rem;
@@ -375,15 +457,23 @@
             font-size: 0.9rem;
             white-space: nowrap;
         }
+        .dark-mode .cat-left {
+            background: #1d4a3a;
+            color: #b0f0d0;
+        }
         .left-warning {
             color: #a13e3e;
             background: #ffe6e2;
         }
+        .dark-mode .left-warning {
+            background: #632e2e;
+            color: #ffb0b0;
+        }
         .add-purchase {
-            background: #ffffff;
+            background: var(--bg-card);
             border-radius: 30px;
             padding: 20px 16px;
-            border: 1px solid #cbddee;
+            border: 1px solid var(--input-border);
             margin: 26px 0 16px;
         }
         .form-row {
@@ -398,13 +488,13 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            background: #f2f7fd;
+            background: var(--input-bg);
             padding: 6px 16px 6px 12px;
             border-radius: 40px;
-            border: 1px solid #c1d9ec;
+            border: 1px solid var(--input-border);
         }
         .form-field span {
-            color: #3d637f;
+            color: var(--footer-text);
             font-size: 0.95rem;
         }
         .form-field input, .form-field select {
@@ -414,6 +504,11 @@
             font-size: 1rem;
             flex: 1;
             min-width: 100px;
+            color: var(--text-primary);
+        }
+        .form-field select option {
+            background: var(--bg-card);
+            color: var(--text-primary);
         }
         .form-field input:focus, .form-field select:focus {
             outline: none;
@@ -424,25 +519,25 @@
         .who-group {
             display: flex;
             gap: 8px;
-            background: #f2f7fd;
+            background: var(--input-bg);
             padding: 4px 6px;
             border-radius: 40px;
-            border: 1px solid #c1d9ec;
+            border: 1px solid var(--input-border);
         }
         .who-option {
             padding: 8px 22px;
             border-radius: 34px;
             font-weight: 500;
             background: transparent;
-            color: #2b577c;
+            color: var(--btn-outline-text);
             cursor: pointer;
             transition: 0.1s;
             border: none;
             font-size: 0.95rem;
         }
         .who-option.active {
-            background: #1e4e72;
-            color: white;
+            background: var(--who-active);
+            color: var(--who-active-text);
         }
         .add-btn {
             background: #1b3d5c;
@@ -461,26 +556,30 @@
         .add-btn:hover {
             background: #0f2c41;
         }
+        .dark-mode .add-btn {
+            background: #2d557a;
+            border-color: #1f3f5a;
+        }
         .history-title {
             display: flex;
             justify-content: space-between;
             margin: 16px 4px 10px;
             font-weight: 600;
-            color: #253e52;
+            color: var(--text-secondary);
         }
         .purchase-list {
             list-style: none;
-            background: #f8fafd;
+            background: var(--purchase-bg);
             border-radius: 24px;
             padding: 8px 4px;
-            border: 1px solid #e2eaf2;
+            border: 1px solid var(--purchase-border);
         }
         .purchase-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 14px 18px;
-            border-bottom: 1px solid #e6edf5;
+            border-bottom: 1px solid var(--purchase-border);
             font-size: 0.95rem;
         }
         .purchase-item:last-child {
@@ -493,26 +592,26 @@
             flex-wrap: wrap;
         }
         .purchase-cat {
-            background: #daeaf5;
+            background: var(--purchase-cat);
             padding: 4px 12px;
             border-radius: 40px;
             font-weight: 500;
-            color: #175277;
+            color: var(--text-primary);
         }
         .purchase-who {
-            background: #e1d7fc;
+            background: var(--purchase-who);
             padding: 4px 12px;
             border-radius: 40px;
             font-weight: 500;
-            color: #3c346b;
+            color: var(--text-primary);
         }
         .purchase-name {
             font-weight: 500;
-            color: #1e3347;
+            color: var(--text-primary);
         }
         .purchase-amount {
             font-weight: 650;
-            color: #1d3a53;
+            color: var(--text-primary);
             padding-left: 12px;
         }
         .delete-btn {
@@ -520,14 +619,14 @@
             border: none;
             font-size: 1.3rem;
             cursor: pointer;
-            color: #9fadbc;
+            color: var(--delete-btn);
             padding: 0 6px;
         }
         .delete-btn:hover {
             color: #c03b3b;
         }
         .footer-note {
-            color: #7d93aa;
+            color: var(--footer-text);
             font-size: 0.85rem;
             text-align: center;
             margin-top: 24px;
@@ -540,7 +639,7 @@
             display: flex;
             gap: 8px;
             align-items: center;
-            background: #f2f8fe;
+            background: var(--input-bg);
             padding: 12px 20px;
             border-radius: 50px;
         }
@@ -550,7 +649,8 @@
             background: transparent;
             padding: 10px 6px;
             font-size: 1rem;
-            border-bottom: 1.5px dashed #7a9ebe;
+            border-bottom: 1.5px dashed var(--btn-outline);
+            color: var(--text-primary);
         }
         .new-cat-row input:focus {
             outline: none;
@@ -569,33 +669,40 @@
         .new-cat-row button:hover {
             background: #0f3a57;
         }
+        .dark-mode .new-cat-row button {
+            background: #2d5f8a;
+        }
         .summary-card {
-            background: linear-gradient(145deg, #e7f0fa, #ffffff);
+            background: var(--summary-bg);
             border-radius: 28px;
             padding: 24px;
             margin-bottom: 22px;
-            border: 1px solid #c9ddec;
+            border: 1px solid var(--summary-border);
+            color: var(--text-primary);
         }
         .summary-row {
             display: flex;
             justify-content: space-between;
             font-size: 1.2rem;
             font-weight: 600;
-            color: #19415b;
+            color: var(--text-primary);
             padding: 8px 0;
         }
         .summary-row.remaining {
-            border-top: 2px dashed #aac3db;
+            border-top: 2px dashed var(--summary-border);
             margin-top: 10px;
             padding-top: 16px;
             font-size: 1.5rem;
             color: #1a4d3e;
         }
+        .dark-mode .summary-row.remaining {
+            color: #8fe0c0;
+        }
         .income-list, .bills-list {
             margin-bottom: 28px;
         }
         .income-item, .bill-item {
-            background: #f1f8ff;
+            background: var(--bill-bg);
             border-radius: 40px;
             padding: 14px 20px;
             margin-bottom: 8px;
@@ -603,7 +710,8 @@
             flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            border: 1px solid #d3e2f2;
+            border: 1px solid var(--bill-border);
+            color: var(--text-primary);
         }
         .bill-details {
             display: flex;
@@ -612,36 +720,37 @@
             align-items: center;
         }
         .bill-frequency {
-            background: #d9e4f0;
+            background: var(--bill-frequency);
             border-radius: 40px;
             padding: 4px 14px;
             font-size: 0.8rem;
             font-weight: 600;
-            color: #1d4c73;
+            color: var(--text-primary);
         }
         .bill-next {
-            background: #fdefd4;
+            background: var(--bill-next);
             border-radius: 40px;
             padding: 4px 14px;
             font-size: 0.8rem;
             font-weight: 600;
-            color: #9a6100;
+            color: var(--text-primary);
         }
         .income-amount, .bill-amount {
             font-weight: 700;
-            color: #1a3f5c;
+            color: var(--text-primary);
         }
         .add-bill-form {
-            background: #f3f9ff;
+            background: var(--input-bg);
             border-radius: 30px;
             padding: 22px 16px;
             margin: 20px 0 10px;
+            border: 1px solid var(--input-border);
         }
         .inline-delete {
             background: none;
             border: none;
             font-size: 1.3rem;
-            color: #9fadbc;
+            color: var(--delete-btn);
             cursor: pointer;
             padding: 0 6px;
         }
@@ -651,18 +760,47 @@
         }
         .date-optional-hint {
             font-size: 0.8rem;
-            color: #6583a1;
+            color: var(--footer-text);
             margin-left: 12px;
+        }
+        /* dark mode toggle button */
+        .theme-toggle {
+            background: var(--input-bg);
+            border: 1px solid var(--btn-outline);
+            border-radius: 40px;
+            padding: 8px 16px;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--btn-outline-text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+        }
+        .theme-toggle:hover {
+            background: var(--category-bg);
+        }
+        .header-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
     </style>
 </head>
-<body>
+<body :class="{ 'dark-mode': isDarkMode }">
 <div class="app" id="app">
     <div class="card" style="padding-bottom: 10px;">
-        <h1>
-            <span class="dollar-logo">$</span>
-            Expense tracker
-        </h1>
+        <div class="header-row">
+            <h1>
+                <span class="dollar-logo">$</span>
+                Expense tracker
+            </h1>
+            <button class="theme-toggle" @click="toggleDarkMode">
+                <span>{{ isDarkMode ? '☀️' : '🌙' }}</span>
+                {{ isDarkMode ? 'Light' : 'Dark' }}
+            </button>
+        </div>
         <div class="page-toggle">
             <button :class="{ active: currentPage === 'expenses' }" @click="currentPage = 'expenses'">📊 Expenses</button>
             <button :class="{ active: currentPage === 'income' }" @click="currentPage = 'income'">💰 Income & Bills</button>
@@ -682,7 +820,7 @@
         </div>
     </div>
 
-    <!-- CALENDAR POPUP (click badge) -->
+    <!-- CALENDAR POPUP -->
     <div v-if="showCalendar" class="calendar-overlay" @click.self="showCalendar = false">
         <div class="calendar-panel">
             <div class="calendar-header">
@@ -769,7 +907,7 @@
                     <div><span class="purchase-amount">${{ p.amount.toFixed(2) }}</span><button class="delete-btn" @click="deletePurchase(index, p.id)">✕</button></div>
                 </li>
             </ul>
-            <div v-else style="text-align: center; padding: 32px; color: #8fa3b7;">✨ purchases show up here</div>
+            <div v-else style="text-align: center; padding: 32px; color: var(--footer-text);">✨ purchases show up here</div>
         </div>
     </div>
 
@@ -782,20 +920,20 @@
                 <div class="summary-row remaining"><span>✅ Left over:</span> <span>${{ (totalIncome - totalBillsFortnight).toFixed(2) }}</span></div>
             </div>
 
-            <h2 style="margin-bottom: 12px;">➕ Income sources</h2>
+            <h2 style="margin-bottom: 12px; color: var(--text-secondary);">➕ Income sources</h2>
             <div class="income-list">
                 <div v-for="(inc, idx) in incomeSources" :key="inc.id" class="income-item">
                     <span><strong>{{ inc.name }}</strong> (every fortnight)</span>
                     <div><span class="income-amount">${{ inc.amount }}</span><button class="inline-delete" @click="deleteIncome(idx)">✕</button></div>
                 </div>
                 <div style="margin-top: 16px; display: flex; gap: 8px;">
-                    <input type="text" v-model="newIncome.name" placeholder="name (e.g. salary)" style="flex:2; padding: 12px; border-radius: 40px; border:1px solid #cbddee;">
-                    <input type="number" v-model="newIncome.amount" placeholder="amount" style="flex:1; padding: 12px; border-radius: 40px; border:1px solid #cbddee;">
+                    <input type="text" v-model="newIncome.name" placeholder="name (e.g. salary)" style="flex:2; padding: 12px; border-radius: 40px; border:1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                    <input type="number" v-model="newIncome.amount" placeholder="amount" style="flex:1; padding: 12px; border-radius: 40px; border:1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
                     <button class="btn-outline" @click="addIncome" style="white-space: nowrap;">add</button>
                 </div>
             </div>
 
-            <h2 style="margin: 24px 0 12px;">📋 Bills</h2>
+            <h2 style="margin: 24px 0 12px; color: var(--text-secondary);">📋 Bills</h2>
             <div class="bills-list">
                 <div v-for="(bill, idx) in bills" :key="bill.id" class="bill-item">
                     <div class="bill-details">
@@ -809,32 +947,32 @@
             </div>
 
             <div class="add-bill-form">
-                <h3 style="margin-bottom: 18px;">➕ Add new bill</h3>
+                <h3 style="margin-bottom: 18px; color: var(--text-secondary);">➕ Add new bill</h3>
                 <div style="display: flex; flex-direction: column; gap: 14px;">
-                    <input type="text" v-model="newBill.name" placeholder="Bill name (e.g. rent, internet)" style="padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
-                    <input type="number" v-model="newBill.amount" placeholder="Amount $" style="padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
+                    <input type="text" v-model="newBill.name" placeholder="Bill name (e.g. rent, internet)" style="padding: 12px; border-radius: 40px; border:1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                    <input type="number" v-model="newBill.amount" placeholder="Amount $" style="padding: 12px; border-radius: 40px; border:1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
                     
                     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <select v-model="newBill.frequency" style="flex:1; padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
+                        <select v-model="newBill.frequency" style="flex:1; padding: 12px; border-radius: 40px; border:1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
                             <option value="fortnightly">Fortnightly</option>
                             <option value="monthly">Monthly</option>
                         </select>
                         
                         <div style="flex:2; display: flex; align-items: center; gap: 5px;">
-                            <input type="date" v-model="newBill.nextDate" style="flex:1; padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
+                            <input type="date" v-model="newBill.nextDate" style="flex:1; padding: 12px; border-radius: 40px; border:1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
                             <span class="date-optional-hint">(optional)</span>
                         </div>
                     </div>
                     
                     <button class="add-btn" @click="addBill" style="margin-top: 8px;">+ add bill</button>
                 </div>
-                <p style="color:#6b8fae; font-size:0.8rem; margin-top: 12px;">If you set a date, we'll auto‑calculate the next one based on frequency.</p>
+                <p style="color: var(--footer-text); font-size:0.8rem; margin-top: 12px;">If you set a date, we'll auto‑calculate the next one based on frequency.</p>
             </div>
-            <p style="color: #7f99b3; font-size:0.9rem; margin-top:12px;">Monthly bills are converted to fortnightly for leftover calc.</p>
+            <p style="color: var(--footer-text); font-size:0.9rem; margin-top:12px;">Monthly bills are converted to fortnightly for leftover calc.</p>
         </div>
     </div>
 
-    <div class="footer-note">John & Jane · click next bill to see calendar</div>
+    <div class="footer-note">John & Jane · click next bill to see calendar · dark mode {{ isDarkMode ? 'on' : 'off' }}</div>
 </div>
 
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -863,7 +1001,8 @@
             const newBill = reactive({ name: '', amount: null, frequency: 'monthly', nextDate: '' });
 
             const fileInput = ref(null);
-            const showCalendar = ref(false);  // calendar popup
+            const showCalendar = ref(false);
+            const isDarkMode = ref(false);  // dark mode state
 
             const fortnightStart = 'Feb 24';
             const fortnightEnd = 'Mar 10';
@@ -876,7 +1015,6 @@
                 return d.toISOString().split('T')[0];
             }
 
-            // compute next date (for generating future occurrences)
             function computeNextDate(currentDate, frequency) {
                 if (!currentDate) return null;
                 if (frequency === 'fortnightly') return addDays(currentDate, 14);
@@ -889,7 +1027,6 @@
                 return null;
             }
 
-            // generate up to 6 future dates for calendar view
             function generateFutureDates(bill) {
                 if (!bill.nextDate) return [];
                 let dates = [];
@@ -901,7 +1038,6 @@
                     const d = new Date(current);
                     if (isNaN(d.getTime())) break;
                     
-                    // include if it's today or future, or if it's the first occurrence (even past)
                     if (i === 0 || d >= today) {
                         dates.push({
                             id: bill.id + '_' + i,
@@ -913,7 +1049,6 @@
                         });
                     }
                     
-                    // generate next
                     const next = computeNextDate(current, bill.frequency);
                     if (!next || next === current) break;
                     current = next;
@@ -921,7 +1056,6 @@
                 return dates;
             }
 
-            // calendar events: combine all bills future dates
             const calendarEvents = computed(() => {
                 let events = [];
                 bills.value.forEach(bill => {
@@ -929,10 +1063,33 @@
                         events = events.concat(generateFutureDates(bill));
                     }
                 });
-                // sort by date
                 events.sort((a,b) => new Date(a.date) - new Date(b.date));
                 return events;
             });
+
+            // dark mode toggle
+            function toggleDarkMode() {
+                isDarkMode.value = !isDarkMode.value;
+                localStorage.setItem('darkMode', isDarkMode.value ? 'true' : 'false');
+                // apply class to body
+                if (isDarkMode.value) {
+                    document.body.classList.add('dark-mode');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                }
+            }
+
+            // load dark mode preference
+            function loadDarkMode() {
+                const saved = localStorage.getItem('darkMode');
+                if (saved === 'true') {
+                    isDarkMode.value = true;
+                    document.body.classList.add('dark-mode');
+                } else {
+                    isDarkMode.value = false;
+                    document.body.classList.remove('dark-mode');
+                }
+            }
 
             // ---- localStorage ----
             function saveToLocal() {
@@ -1041,7 +1198,6 @@
                 return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
             }
 
-            // for calendar display (short)
             function formatDate(dateStr) {
                 const d = new Date(dateStr);
                 return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
@@ -1103,7 +1259,11 @@
                 reader.readAsText(file);
             }
 
-            onMounted(() => { loadFromLocal(); recalcSpent(); });
+            onMounted(() => { 
+                loadFromLocal(); 
+                recalcSpent();
+                loadDarkMode();
+            });
             watch([categories, purchases, incomeSources, bills], saveToLocal, { deep: true });
 
             return {
@@ -1115,7 +1275,8 @@
                 categoryName, sortedPurchases, addIncome, deleteIncome, totalIncome,
                 addBill, deleteBill, totalBillsFortnight, nextBillReminder, formatNextDate,
                 exportData, triggerImport, importData, fileInput,
-                showCalendar, calendarEvents, formatDate
+                showCalendar, calendarEvents, formatDate,
+                isDarkMode, toggleDarkMode
             };
         }
     });
