@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Expense tracker · Jordon + Tiffany</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #f4f7fb;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 16px 8px 40px;
+        }
+        .app {
+            max-width: 600px;
+            width: 100%;
+        }
+        .card {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 8px 24px rgba(0,10,30,0.08);
+            padding: 24px 20px;
+            margin-bottom: 20px;
+            transition: 0.2s;
+            border: 1px solid #f0f2f5;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #0b2a3c;
+            margin-bottom: 6px;
+        }
+        .dollar-logo {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #1e5b8a;
+            background: #e9f0f9;
+            width: 52px;
+            height: 52px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fortnight-badge {
+            font-size: 0.9rem;
+            background: #d7e7ff;
+            color: #035388;
+            padding: 8px 14px;
+            border-radius: 40px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 8px 0 12px;
+        }
+        .budget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            row-gap: 12px;
+            margin-bottom: 16px;
+        }
+        .budget-header h2 {
+            font-size: 1.4rem;
+            font-weight: 550;
+            color: #16394e;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-outline {
+            background: none;
+            border: 1px solid #b7ccdd;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1d3b50;
+            cursor: pointer;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-outline:hover {
+            background: #e3edf5;
+        }
+        .btn-outline.accent {
+            background: #1b3d5c;
+            border-color: #143649;
+            color: white;
+        }
+        .reset-btn {
+            background: none;
+            border: 1px solid #cbd5e1;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #2c3e4f;
+            cursor: pointer;
+        }
+        .reset-btn:hover {
+            background: #eef2f6;
+        }
+        .category-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin: 24px 0 16px;
+        }
+        .category-row {
+            background: #f9fcff;
+            border-radius: 24px;
+            padding: 14px 18px;
+            border: 1px solid #dee7ef;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+        .cat-info {
+            flex: 2 1 160px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .cat-name-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 100px;
+        }
+        .cat-name {
+            font-weight: 600;
+            color: #1e3b4f;
+            background: transparent;
+            border: 1px dashed #9cb8d3;
+            border-radius: 30px;
+            padding: 5px 12px;
+            font-size: 0.95rem;
+            width: 110px;
+        }
+        .cat-name:focus {
+            outline: 2px solid #3670a8;
+            border-color: #3670a8;
+            background: white;
+        }
+        .delete-cat {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #9fadbc;
+            padding: 0 4px;
+            border-radius: 30px;
+        }
+        .delete-cat:hover {
+            color: #b12626;
+            background: #ffe3e3;
+        }
+        .cat-budget {
+            background: #e3eef9;
+            border-radius: 30px;
+            padding: 5px 12px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #11517c;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cat-budget input {
+            width: 80px;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #0a3142;
+            padding: 4px 0 4px 6px;
+            border-bottom: 1.5px dashed #7fa3c2;
+        }
+        .cat-budget input:focus {
+            outline: none;
+            border-bottom-color: #0057a3;
+        }
+        .progress-section {
+            flex: 3 1 200px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        .progress-bar-bg {
+            background: #dce5ed;
+            height: 10px;
+            border-radius: 20px;
+            flex: 1 1 120px;
+            min-width: 100px;
+        }
+        .progress-fill {
+            height: 10px;
+            border-radius: 20px;
+            background: #1d7eb5;
+            width: 0%;
+        }
+        .cat-spent {
+            font-weight: 550;
+            color: #2a4f6e;
+            min-width: 70px;
+            text-align: right;
+            font-size: 0.95rem;
+        }
+        .cat-left {
+            font-weight: 600;
+            color: #0b4d3b;
+            background: #e0f0e9;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        .left-warning {
+            color: #a13e3e;
+            background: #ffe6e2;
+        }
+        .add-purchase {
+            background: #ffffff;
+            border-radius: 30px;
+            padding: 20px 16px;
+            border: 1px solid #cbddee;
+            margin: 26px 0 16px;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+            align-items: center;
+        }
+        .form-field {
+            flex: 1 1 130px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #f2f7fd;
+            padding: 6px 16px 6px 12px;
+            border-radius: 40px;
+            border: 1px solid #c1d9ec;
+        }
+        .form-field span {
+            color: #3d637f;
+            font-size: 0.95rem;
+        }
+        .form-field input, .form-field select {
+            border: none;
+            background: transparent;
+            padding: 8px 0;
+            font-size: 1rem;
+            flex: 1;
+            min-width: 100px;
+        }
+        .form-field input:focus, .form-field select:focus {
+            outline: none;
+        }
+        .form-field select {
+            cursor: pointer;
+        }
+        .who-group {
+            display: flex;
+            gap: 8px;
+            background: #f2f7fd;
+            padding: 4px 6px;
+            border-radius: 40px;
+            border: 1px solid #c1d9ec;
+        }
+        .who-option {
+            padding: 8px 22px;
+            border-radius: 34px;
+            font-weight: 500;
+            background: transparent;
+            color: #2b577c;
+            cursor: pointer;
+            transition: 0.1s;
+            border: none;
+            font-size: 0.95rem;
+        }
+        .who-option.active {
+            background: #1e4e72;
+            color: white;
+        }
+        .add-btn {
+            background: #1b3d5c;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 14px 30px;
+            border-radius: 40px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,40,70,0.2);
+            transition: 0.15s;
+            border: 1px solid #163246;
+            flex: 1 0 100%;
+        }
+        .add-btn:hover {
+            background: #0f2c41;
+        }
+        .history-title {
+            display: flex;
+            justify-content: space-between;
+            margin: 16px 4px 10px;
+            font-weight: 600;
+            color: #253e52;
+        }
+        .purchase-list {
+            list-style: none;
+            background: #f8fafd;
+            border-radius: 24px;
+            padding: 8px 4px;
+            border: 1px solid #e2eaf2;
+        }
+        .purchase-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid #e6edf5;
+            font-size: 0.95rem;
+        }
+        .purchase-item:last-child {
+            border-bottom: none;
+        }
+        .purchase-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .purchase-cat {
+            background: #daeaf5;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-weight: 500;
+            color: #175277;
+        }
+        .purchase-who {
+            background: #e1d7fc;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-weight: 500;
+            color: #3c346b;
+        }
+        .purchase-name {
+            font-weight: 500;
+            color: #1e3347;
+        }
+        .purchase-amount {
+            font-weight: 650;
+            color: #1d3a53;
+            padding-left: 12px;
+        }
+        .delete-btn {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: #9fadbc;
+            padding: 0 6px;
+        }
+        .delete-btn:hover {
+            color: #c03b3b;
+        }
+        .footer-note {
+            color: #7d93aa;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 24px;
+        }
+        input[type="number"]::-webkit-inner-spin-button {
+            opacity: 0.5;
+        }
+        .new-cat-row {
+            margin-top: 20px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: #f2f8fe;
+            padding: 12px 20px;
+            border-radius: 50px;
+        }
+        .new-cat-row input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 10px 6px;
+            font-size: 1rem;
+            border-bottom: 1.5px dashed #7a9ebe;
+        }
+        .new-cat-row input:focus {
+            outline: none;
+            border-bottom-color: #175277;
+        }
+        .new-cat-row button {
+            background: #1d5179;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 10px 22px;
+            border-radius: 40px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .new-cat-row button:hover {
+            background: #0f3a57;
+        }
+    </style>
+</head>
+<body>
+<div class="app" id="app">
+    <div class="card" style="padding-bottom: 10px;">
+        <h1>
+            <span class="dollar-logo">$</span>
+            Expense tracker
+        </h1>
+        <div class="fortnight-badge">
+            <span>⏳ fortnight</span>
+            <strong>{{fortnightStart}}</strong> · <span>to</span> <strong>{{fortnightEnd}}</strong>
+        </div>
+    </div>
+
+    <!-- categories & budgets + edit tools -->
+    <div class="card">
+        <div class="budget-header">
+            <h2>📁 categories</h2>
+            <div class="header-actions">
+                <button class="btn-outline" @click="addNewCategoryPrompt">➕ add category</button>
+                <button class="reset-btn" @click="resetFortnight">↻ reset fortnight</button>
+            </div>
+        </div>
+
+        <!-- editable category list -->
+        <div class="category-grid">
+            <div v-for="(cat, idx) in categories" :key="cat.id" class="category-row">
+                <div class="cat-info">
+                    <div class="cat-name-wrapper">
+                        <input type="text" class="cat-name" v-model="cat.name" @input="updateStorage" placeholder="name">
+                        <button class="delete-cat" @click="removeCategory(cat.id, idx)" title="delete category">✕</button>
+                    </div>
+                    <div class="cat-budget">
+                        <span>$</span>
+                        <input type="number" min="0" step="1" v-model.number="cat.budget" @input="updateStorage" placeholder="budget">
+                    </div>
+                </div>
+                <div class="progress-section">
+                    <div class="progress-bar-bg">
+                        <div class="progress-fill" :style="{ width: progressPercent(cat) }"></div>
+                    </div>
+                    <span class="cat-spent">${{ cat.spent }}</span>
+                    <span class="cat-left" :class="{ 'left-warning': cat.budget - cat.spent < 0 }">${{ cat.budget - cat.spent }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- quick add new category (inline) -->
+        <div class="new-cat-row">
+            <input type="text" v-model="newCategoryName" placeholder="new category name (e.g. 'pets')" @keyup.enter="commitNewCategory">
+            <button @click="commitNewCategory">➕ add</button>
+        </div>
+
+        <!-- add purchase form with Jordon & Tiffany -->
+        <div class="add-purchase">
+            <div class="form-row">
+                <div class="form-field">
+                    <span>📦</span>
+                    <input type="text" v-model="newPurchase.description" placeholder="item name" @keyup.enter="addPurchase">
+                </div>
+                <div class="form-field">
+                    <span>$</span>
+                    <input type="number" min="0" step="0.01" v-model.number="newPurchase.amount" placeholder="0" @keyup.enter="addPurchase">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-field">
+                    <span>📂</span>
+                    <select v-model="newPurchase.categoryId">
+                        <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                    </select>
+                </div>
+                <!-- who bought? JORDON / TIFFANY -->
+                <div class="who-group">
+                    <button type="button" class="who-option" :class="{ active: newPurchase.who === 'Jordon' }" @click="newPurchase.who = 'Jordon'">👨 Jordon</button>
+                    <button type="button" class="who-option" :class="{ active: newPurchase.who === 'Tiffany' }" @click="newPurchase.who = 'Tiffany'">👩 Tiffany</button>
+                </div>
+            </div>
+            <button class="add-btn" @click="addPurchase">+ add purchase</button>
+        </div>
+    </div>
+
+    <!-- recent purchases -->
+    <div class="card" style="padding-top: 16px;">
+        <div class="history-title">
+            <span>📋 purchases this fortnight</span>
+            <span>{{ purchases.length }} items</span>
+        </div>
+        <ul class="purchase-list" v-if="purchases.length">
+            <li v-for="(p, index) in sortedPurchases" :key="p.id" class="purchase-item">
+                <div class="purchase-left">
+                    <span class="purchase-cat">{{ categoryName(p.categoryId) }}</span>
+                    <span class="purchase-who">{{ p.who === 'Jordon' ? '👨 Jordon' : '👩 Tiffany' }}</span>
+                    <span class="purchase-name">{{ p.description }}</span>
+                </div>
+                <div style="display: flex; align-items: center;">
+                    <span class="purchase-amount">${{ p.amount.toFixed(2) }}</span>
+                    <button class="delete-btn" @click="deletePurchase(index, p.id)">✕</button>
+                </div>
+            </li>
+        </ul>
+        <div v-else style="text-align: center; padding: 32px 10px; color: #8fa3b7;">✨ purchases will show up here</div>
+    </div>
+    <div class="footer-note">Jordon & Tiffany · data stays in browser</div>
+</div>
+
+<!-- Vue & logic -->
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script>
+    const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
+
+    const defaultCategories = [
+        { id: 'c1', name: 'groceries', budget: 200, spent: 0 },
+        { id: 'c2', name: 'dining out', budget: 100, spent: 0 },
+        { id: 'c3', name: 'transport', budget: 80, spent: 0 },
+        { id: 'c4', name: 'entertainment', budget: 60, spent: 0 },
+        { id: 'c5', name: 'household', budget: 70, spent: 0 }
+    ];
+
+    const app = createApp({
+        setup() {
+            // reactive state
+            const categories = ref([]);
+            const purchases = ref([]);
+            const newPurchase = reactive({
+                description: '',
+                amount: null,
+                categoryId: '',
+                who: 'Jordon'      // 👈 Jordon / Tiffany
+            });
+            const newCategoryName = ref('');
+
+            // ---------- fixed fortnight start: tuesday 24th feb 2026 (arbitrary year, but keep same date)
+            // we want start = Feb 24 (always shown as "Feb 24" and end = Mar 10 (14 days later)
+            const fortnightStartDisplay = 'Feb 24';
+            const fortnightEndDisplay = 'Mar 10';
+
+            // ---------- helpers ----------
+            function saveToLocal() {
+                localStorage.setItem('expense_categories', JSON.stringify(categories.value));
+                localStorage.setItem('expense_purchases', JSON.stringify(purchases.value));
+            }
+
+            function loadFromLocal() {
+                const savedCats = localStorage.getItem('expense_categories');
+                const savedPurchases = localStorage.getItem('expense_purchases');
+                if (savedCats) {
+                    try {
+                        const parsed = JSON.parse(savedCats);
+                        if (Array.isArray(parsed) && parsed.length) {
+                            categories.value = parsed.map(c => ({ ...c, spent: c.spent || 0 }));
+                        } else {
+                            categories.value = defaultCategories.map(c => ({ ...c }));
+                        }
+                    } catch (e) {
+                        categories.value = defaultCategories.map(c => ({ ...c }));
+                    }
+                } else {
+                    categories.value = defaultCategories.map(c => ({ ...c }));
+                }
+
+                if (savedPurchases) {
+                    try {
+                        purchases.value = JSON.parse(savedPurchases);
+                    } catch (e) {
+                        purchases.value = [];
+                    }
+                } else {
+                    purchases.value = [];
+                }
+
+                // make sure first category is selected in form
+                if (categories.value.length > 0 && !newPurchase.categoryId) {
+                    newPurchase.categoryId = categories.value[0].id;
+                }
+            }
+
+            // recalc spent from purchases (fortnight)
+            function recalcSpent() {
+                categories.value.forEach(c => c.spent = 0);
+                purchases.value.forEach(p => {
+                    const cat = categories.value.find(c => c.id === p.categoryId);
+                    if (cat) {
+                        cat.spent = (cat.spent || 0) + p.amount;
+                    }
+                });
+                saveToLocal();
+            }
+
+            // add purchase
+            function addPurchase() {
+                const desc = newPurchase.description.trim();
+                const amount = newPurchase.amount;
+                if (!desc) {
+                    alert('please enter a description');
+                    return;
+                }
+                if (!amount || amount <= 0) {
+                    alert('enter a valid amount (>0)');
+                    return;
+                }
+                if (!newPurchase.categoryId || !categories.value.find(c => c.id === newPurchase.categoryId)) {
+                    alert('please select a category');
+                    return;
+                }
+
+                const purchase = {
+                    id: Date.now() + '-' + Math.random().toString(36).substring(2, 8),
+                    description: desc,
+                    amount: Number(amount),
+                    categoryId: newPurchase.categoryId,
+                    who: newPurchase.who,
+                    timestamp: Date.now()
+                };
+                purchases.value.push(purchase);
+                // reset form
+                newPurchase.description = '';
+                newPurchase.amount = null;
+                // keep same category & who
+                recalcSpent();
+            }
+
+            function deletePurchase(index, id) {
+                purchases.value.splice(index, 1);
+                recalcSpent();
+            }
+
+            function resetFortnight() {
+                if (confirm('Clear ALL purchases and reset spent amounts? Budgets and category names stay unchanged.')) {
+                    purchases.value = [];
+                    recalcSpent();
+                }
+            }
+
+            function updateStorage() {
+                saveToLocal(); // budgets / names changed
+            }
+
+            // category management
+            function addNewCategoryPrompt() {
+                const name = prompt('Enter new category name:', 'new');
+                if (name && name.trim()) {
+                    addCategory(name.trim());
+                }
+            }
+
+            function addCategory(name) {
+                const newId = 'cat_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
+                const newCat = {
+                    id: newId,
+                    name: name,
+                    budget: 50,
+                    spent: 0
+                };
+                categories.value.push(newCat);
+                if (categories.value.length === 1) newPurchase.categoryId = newCat.id;
+                saveToLocal();
+            }
+
+            function commitNewCategory() {
+                const name = newCategoryName.value.trim();
+                if (name) {
+                    addCategory(name);
+                    newCategoryName.value = '';
+                } else {
+                    alert('enter a name');
+                }
+            }
+
+            function removeCategory(catId, index) {
+                if (categories.value.length <= 1) {
+                    alert('keep at least one category');
+                    return;
+                }
+                // check if any purchase uses this category
+                const used = purchases.value.some(p => p.categoryId === catId);
+                if (used) {
+                    if (!confirm('This category has purchases. Delete anyway? (purchases will be removed)')) return;
+                    // delete purchases with that category
+                    purchases.value = purchases.value.filter(p => p.categoryId !== catId);
+                }
+                categories.value.splice(index, 1);
+                // if selected category removed, update form selection
+                if (!categories.value.find(c => c.id === newPurchase.categoryId)) {
+                    newPurchase.categoryId = categories.value[0]?.id || '';
+                }
+                recalcSpent(); // also saves
+            }
+
+            // computed dates (static per request)
+            const fortnightStart = computed(() => fortnightStartDisplay);
+            const fortnightEnd = computed(() => fortnightEndDisplay);
+
+            function progressPercent(cat) {
+                if (cat.budget <= 0) return '0%';
+                const percent = (cat.spent / cat.budget) * 100;
+                return Math.min(percent, 100) + '%';
+            }
+
+            function categoryName(catId) {
+                const cat = categories.value.find(c => c.id === catId);
+                return cat ? cat.name : '?';
+            }
+
+            const sortedPurchases = computed(() => {
+                return [...purchases.value].sort((a,b) => b.timestamp - a.timestamp);
+            });
+
+            // initial load & watchers
+            onMounted(() => {
+                loadFromLocal();
+                recalcSpent();
+                if (categories.value.length > 0 && !newPurchase.categoryId) {
+                    newPurchase.categoryId = categories.value[0].id;
+                }
+            });
+
+            watch([categories, purchases], () => {
+                saveToLocal();
+            }, { deep: true });
+
+            return {
+                categories,
+                purchases,
+                newPurchase,
+                newCategoryName,
+                fortnightStart,
+                fortnightEnd,
+                addPurchase,
+                deletePurchase,
+                resetFortnight,
+                updateStorage,
+                progressPercent,
+                categoryName,
+                sortedPurchases,
+                addNewCategoryPrompt,
+                commitNewCategory,
+                removeCategory
+            };
+        }
+    });
+
+    app.mount('#app');
+</script>
+</body>
+</html>
