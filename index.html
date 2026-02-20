@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Expense tracker · John + Jane</title>
     <style>
+        /* styles from previous version + calendar popup */
         * {
             box-sizing: border-box;
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -89,6 +90,100 @@
             align-items: center;
             gap: 6px;
             margin: 8px 0 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .fortnight-badge:hover {
+            background: #c2d9f5;
+            transform: scale(1.02);
+        }
+        /* calendar popup */
+        .calendar-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,20,40,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(3px);
+        }
+        .calendar-panel {
+            background: white;
+            border-radius: 40px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 28px 22px;
+            box-shadow: 0 30px 60px rgba(0,30,60,0.4);
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #123b5a;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #6e8faf;
+            padding: 0 12px;
+        }
+        .calendar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .calendar-item {
+            background: #f1f8ff;
+            border-radius: 60px;
+            padding: 16px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #c5d9ef;
+        }
+        .cal-bill-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .cal-bill-name {
+            font-weight: 700;
+            color: #113750;
+        }
+        .cal-bill-meta {
+            font-size: 0.8rem;
+            color: #456f94;
+            display: flex;
+            gap: 10px;
+        }
+        .cal-bill-amount {
+            font-weight: 700;
+            color: #1c4d7a;
+            background: #ddeeff;
+            padding: 6px 16px;
+            border-radius: 40px;
+        }
+        .future-tag {
+            background: #d9e6b5;
+            color: #3f5c1a;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .no-bills-cal {
+            padding: 40px;
+            text-align: center;
+            color: #7d9bbf;
         }
         .budget-header {
             display: flex;
@@ -554,6 +649,11 @@
         .file-input {
             display: none;
         }
+        .date-optional-hint {
+            font-size: 0.8rem;
+            color: #6583a1;
+            margin-left: 12px;
+        }
     </style>
 </head>
 <body>
@@ -563,24 +663,46 @@
             <span class="dollar-logo">$</span>
             Expense tracker
         </h1>
-        <!-- page toggle: expenses / income+bills -->
         <div class="page-toggle">
             <button :class="{ active: currentPage === 'expenses' }" @click="currentPage = 'expenses'">📊 Expenses</button>
             <button :class="{ active: currentPage === 'income' }" @click="currentPage = 'income'">💰 Income & Bills</button>
         </div>
         
-        <!-- EXPORT/IMPORT BUTTONS - always visible -->
         <div class="export-import">
             <button @click="exportData">📤 Export Data</button>
             <button @click="triggerImport">📥 Import Data</button>
             <input type="file" ref="fileInput" class="file-input" accept=".json" @change="importData">
         </div>
         
-        <div class="fortnight-badge" v-if="currentPage === 'expenses'">
+        <div class="fortnight-badge" v-if="currentPage === 'expenses'" @click="showCalendar = true">
             <span>⏳ fortnight</span> <strong>Feb 24</strong> · <span>to</span> <strong>Mar 10</strong>
         </div>
-        <div class="fortnight-badge" v-else>
-            <span>📅 upcoming bills</span> <strong>{{ nextBillReminder }}</strong>
+        <div class="fortnight-badge" v-else @click="showCalendar = true">
+            <span>📅 next bill</span> <strong>{{ nextBillReminder }}</strong> <span style="font-size:0.8rem;">↗ calendar</span>
+        </div>
+    </div>
+
+    <!-- CALENDAR POPUP (click badge) -->
+    <div v-if="showCalendar" class="calendar-overlay" @click.self="showCalendar = false">
+        <div class="calendar-panel">
+            <div class="calendar-header">
+                <span>📅 Upcoming bills</span>
+                <button class="close-btn" @click="showCalendar = false">✕</button>
+            </div>
+            <div class="calendar-list" v-if="calendarEvents.length">
+                <div v-for="ev in calendarEvents" :key="ev.id" class="calendar-item">
+                    <div class="cal-bill-info">
+                        <span class="cal-bill-name">{{ ev.name }}</span>
+                        <span class="cal-bill-meta">
+                            <span>{{ ev.frequency }}</span>
+                            <span>next: {{ formatDate(ev.date) }}</span>
+                            <span v-if="ev.isFuture" class="future-tag">future</span>
+                        </span>
+                    </div>
+                    <span class="cal-bill-amount">${{ ev.amount }}</span>
+                </div>
+            </div>
+            <div v-else class="no-bills-cal">✨ No bills with dates yet. Add a date to a bill.</div>
         </div>
     </div>
 
@@ -679,7 +801,8 @@
                     <div class="bill-details">
                         <strong>{{ bill.name }}</strong>
                         <span class="bill-frequency">{{ bill.frequency }}</span>
-                        <span class="bill-next">next: {{ bill.nextDate }}</span>
+                        <span class="bill-next" v-if="bill.nextDate && bill.nextDate !== 'optional'">next: {{ formatNextDate(bill.nextDate) }}</span>
+                        <span class="bill-next" v-else style="background:#e2eaf2; color:#4d688b;">no date set</span>
                     </div>
                     <div><span class="bill-amount">${{ bill.amount }}</span><button class="inline-delete" @click="deleteBill(idx)">✕</button></div>
                 </div>
@@ -690,21 +813,28 @@
                 <div style="display: flex; flex-direction: column; gap: 14px;">
                     <input type="text" v-model="newBill.name" placeholder="Bill name (e.g. rent, internet)" style="padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
                     <input type="number" v-model="newBill.amount" placeholder="Amount $" style="padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
-                    <div style="display: flex; gap: 10px; align-items: center;">
+                    
+                    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <select v-model="newBill.frequency" style="flex:1; padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
                             <option value="fortnightly">Fortnightly</option>
                             <option value="monthly">Monthly</option>
                         </select>
-                        <input type="date" v-model="newBill.nextDate" style="flex:1; padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
+                        
+                        <div style="flex:2; display: flex; align-items: center; gap: 5px;">
+                            <input type="date" v-model="newBill.nextDate" style="flex:1; padding: 12px; border-radius: 40px; border:1px solid #b7ccdd;">
+                            <span class="date-optional-hint">(optional)</span>
+                        </div>
                     </div>
+                    
                     <button class="add-btn" @click="addBill" style="margin-top: 8px;">+ add bill</button>
                 </div>
+                <p style="color:#6b8fae; font-size:0.8rem; margin-top: 12px;">If you set a date, we'll auto‑calculate the next one based on frequency.</p>
             </div>
-            <p style="color: #7f99b3; font-size:0.9rem; margin-top:12px;">Monthly bills are converted to fortnightly for the leftover calculation.</p>
+            <p style="color: #7f99b3; font-size:0.9rem; margin-top:12px;">Monthly bills are converted to fortnightly for leftover calc.</p>
         </div>
     </div>
 
-    <div class="footer-note">John & Jane · Export/import to share data</div>
+    <div class="footer-note">John & Jane · click next bill to see calendar</div>
 </div>
 
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -732,14 +862,79 @@
             const newIncome = reactive({ name: '', amount: null });
             const newBill = reactive({ name: '', amount: null, frequency: 'monthly', nextDate: '' });
 
-            // file import ref
             const fileInput = ref(null);
+            const showCalendar = ref(false);  // calendar popup
 
-            // static fortnight display
             const fortnightStart = 'Feb 24';
             const fortnightEnd = 'Mar 10';
 
-            // ---- helpers ----
+            // helper: add days
+            function addDays(dateStr, days) {
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return null;
+                d.setDate(d.getDate() + days);
+                return d.toISOString().split('T')[0];
+            }
+
+            // compute next date (for generating future occurrences)
+            function computeNextDate(currentDate, frequency) {
+                if (!currentDate) return null;
+                if (frequency === 'fortnightly') return addDays(currentDate, 14);
+                if (frequency === 'monthly') {
+                    const d = new Date(currentDate);
+                    if (isNaN(d.getTime())) return null;
+                    d.setMonth(d.getMonth() + 1);
+                    return d.toISOString().split('T')[0];
+                }
+                return null;
+            }
+
+            // generate up to 6 future dates for calendar view
+            function generateFutureDates(bill) {
+                if (!bill.nextDate) return [];
+                let dates = [];
+                let current = bill.nextDate;
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                
+                for (let i = 0; i < 6; i++) {
+                    const d = new Date(current);
+                    if (isNaN(d.getTime())) break;
+                    
+                    // include if it's today or future, or if it's the first occurrence (even past)
+                    if (i === 0 || d >= today) {
+                        dates.push({
+                            id: bill.id + '_' + i,
+                            name: bill.name,
+                            amount: bill.amount,
+                            frequency: bill.frequency,
+                            date: current,
+                            isFuture: d >= today
+                        });
+                    }
+                    
+                    // generate next
+                    const next = computeNextDate(current, bill.frequency);
+                    if (!next || next === current) break;
+                    current = next;
+                }
+                return dates;
+            }
+
+            // calendar events: combine all bills future dates
+            const calendarEvents = computed(() => {
+                let events = [];
+                bills.value.forEach(bill => {
+                    if (bill.nextDate) {
+                        events = events.concat(generateFutureDates(bill));
+                    }
+                });
+                // sort by date
+                events.sort((a,b) => new Date(a.date) - new Date(b.date));
+                return events;
+            });
+
+            // ---- localStorage ----
             function saveToLocal() {
                 localStorage.setItem('expense_categories', JSON.stringify(categories.value));
                 localStorage.setItem('expense_purchases', JSON.stringify(purchases.value));
@@ -766,7 +961,7 @@
                 saveToLocal();
             }
 
-            // expenses functions
+            // expenses
             function addPurchase() {
                 if (!newPurchase.description.trim() || !newPurchase.amount || newPurchase.amount <= 0) return alert('Valid description and amount');
                 purchases.value.push({
@@ -782,7 +977,7 @@
             }
             function deletePurchase(index) { purchases.value.splice(index, 1); recalcSpent(); }
             function resetFortnight() { if (confirm('Clear purchases?')) { purchases.value = []; recalcSpent(); } }
-            function addNewCategoryPrompt() { let n = prompt('Category name:'); if (n && n.trim()) addCategory(n.trim()); }
+            function addNewCategoryPrompt() { let n = prompt('Category name:'); if (n?.trim()) addCategory(n.trim()); }
             function addCategory(name) {
                 categories.value.push({ id: 'cat_'+Date.now()+'_'+Math.random().toString(36).substring(2,6), name, budget: 50, spent: 0 });
                 if (categories.value.length===1) newPurchase.categoryId = categories.value[0].id;
@@ -802,7 +997,7 @@
             function categoryName(catId) { return categories.value.find(c=>c.id===catId)?.name || '?'; }
             const sortedPurchases = computed(() => [...purchases.value].sort((a,b)=>b.timestamp - a.timestamp));
 
-            // income functions
+            // income
             function addIncome() {
                 if (!newIncome.name.trim() || !newIncome.amount || newIncome.amount <=0) return alert('Valid name and amount');
                 incomeSources.value.push({ id: Date.now()+'-'+Math.random().toString(36).substring(2,6), name: newIncome.name.trim(), amount: Number(newIncome.amount) });
@@ -812,19 +1007,24 @@
             function deleteIncome(idx) { incomeSources.value.splice(idx,1); saveToLocal(); }
             const totalIncome = computed(() => incomeSources.value.reduce((sum,i)=> sum + i.amount, 0));
 
-            // bills functions
+            // bills
             function addBill() {
-                if (!newBill.name.trim() || !newBill.amount || newBill.amount <=0 || !newBill.nextDate) return alert('Complete all fields');
+                if (!newBill.name.trim() || !newBill.amount || newBill.amount <=0) return alert('Name and amount required (date optional)');
+                
+                const nextDate = newBill.nextDate && newBill.nextDate.trim() !== '' ? newBill.nextDate : null;
+                
                 bills.value.push({
                     id: Date.now()+'-'+Math.random().toString(36).substring(2,6),
                     name: newBill.name.trim(),
                     amount: Number(newBill.amount),
                     frequency: newBill.frequency,
-                    nextDate: newBill.nextDate
+                    nextDate: nextDate
                 });
+                
                 newBill.name = ''; newBill.amount = null; newBill.frequency = 'monthly'; newBill.nextDate = '';
                 saveToLocal();
             }
+            
             function deleteBill(idx) { bills.value.splice(idx,1); saveToLocal(); }
 
             const totalBillsFortnight = computed(() => {
@@ -834,26 +1034,46 @@
                 }, 0);
             });
 
+            function formatNextDate(dateStr) {
+                if (!dateStr) return 'not set';
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return dateStr;
+                return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+            }
+
+            // for calendar display (short)
+            function formatDate(dateStr) {
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+            }
+
             const nextBillReminder = computed(() => {
-                if (!bills.value.length) return 'no bills';
                 const today = new Date();
+                today.setHours(0,0,0,0);
                 let nearest = null;
                 bills.value.forEach(b => {
+                    if (!b.nextDate) return;
                     const d = new Date(b.nextDate);
-                    if (!isNaN(d) && (!nearest || d < nearest)) nearest = d;
+                    if (!isNaN(d) && d >= today) {
+                        if (!nearest || d < nearest) nearest = d;
+                    }
                 });
-                return nearest ? nearest.toLocaleDateString('en-US',{month:'short', day:'numeric'}) : 'add dates';
+                if (!nearest) {
+                    let anyDate = null;
+                    bills.value.forEach(b => {
+                        if (!b.nextDate) return;
+                        const d = new Date(b.nextDate);
+                        if (!isNaN(d) && (!anyDate || d < anyDate)) anyDate = d;
+                    });
+                    if (anyDate) return anyDate.toLocaleDateString('en-US',{month:'short', day:'numeric'});
+                    return 'no dates';
+                }
+                return nearest.toLocaleDateString('en-US',{month:'short', day:'numeric'});
             });
 
-            // ----- EXPORT / IMPORT -----
+            // export/import
             function exportData() {
-                const data = {
-                    categories: categories.value,
-                    purchases: purchases.value,
-                    incomeSources: incomeSources.value,
-                    bills: bills.value,
-                    exportDate: new Date().toISOString()
-                };
+                const data = { categories: categories.value, purchases: purchases.value, incomeSources: incomeSources.value, bills: bills.value, exportDate: new Date().toISOString() };
                 const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -862,46 +1082,22 @@
                 a.click();
                 URL.revokeObjectURL(url);
             }
-
-            function triggerImport() {
-                fileInput.value.click();
-            }
-
+            function triggerImport() { fileInput.value.click(); }
             function importData(event) {
                 const file = event.target.files[0];
                 if (!file) return;
-
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
-                        
-                        // validate basic structure
-                        if (data.categories && Array.isArray(data.categories)) {
-                            categories.value = data.categories.map(c => ({ ...c, spent: c.spent || 0 }));
-                        }
-                        if (data.purchases && Array.isArray(data.purchases)) {
-                            purchases.value = data.purchases;
-                        }
-                        if (data.incomeSources && Array.isArray(data.incomeSources)) {
-                            incomeSources.value = data.incomeSources;
-                        }
-                        if (data.bills && Array.isArray(data.bills)) {
-                            bills.value = data.bills;
-                        }
-                        
-                        // ensure category selection
-                        if (categories.value.length && !newPurchase.categoryId) {
-                            newPurchase.categoryId = categories.value[0].id;
-                        }
-                        
+                        if (data.categories) categories.value = data.categories.map(c => ({ ...c, spent: c.spent || 0 }));
+                        if (data.purchases) purchases.value = data.purchases;
+                        if (data.incomeSources) incomeSources.value = data.incomeSources;
+                        if (data.bills) bills.value = data.bills;
+                        if (categories.value.length && !newPurchase.categoryId) newPurchase.categoryId = categories.value[0].id;
                         recalcSpent();
                         alert('Data imported successfully!');
-                    } catch (err) {
-                        alert('Invalid file format. Please select a valid backup file.');
-                        console.error(err);
-                    }
-                    // reset file input so same file can be chosen again
+                    } catch { alert('Invalid file'); }
                     event.target.value = '';
                 };
                 reader.readAsText(file);
@@ -917,8 +1113,9 @@
                 addPurchase, deletePurchase, resetFortnight, addNewCategoryPrompt,
                 commitNewCategory, removeCategory, updateStorage, progressPercent,
                 categoryName, sortedPurchases, addIncome, deleteIncome, totalIncome,
-                addBill, deleteBill, totalBillsFortnight, nextBillReminder,
-                exportData, triggerImport, importData, fileInput
+                addBill, deleteBill, totalBillsFortnight, nextBillReminder, formatNextDate,
+                exportData, triggerImport, importData, fileInput,
+                showCalendar, calendarEvents, formatDate
             };
         }
     });
