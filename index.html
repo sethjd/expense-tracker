@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Expense tracker · Jordon + Tiffany</title>
+    <title>Expense tracker · John + Jane</title>
     <style>
         * {
             box-sizing: border-box;
@@ -593,8 +593,8 @@
                         </select>
                     </div>
                     <div class="who-group">
-                        <button type="button" class="who-option" :class="{ active: newPurchase.who === 'Jordon' }" @click="newPurchase.who = 'Jordon'">👨 Jordon</button>
-                        <button type="button" class="who-option" :class="{ active: newPurchase.who === 'Tiffany' }" @click="newPurchase.who = 'Tiffany'">👩 Tiffany</button>
+                        <button type="button" class="who-option" :class="{ active: newPurchase.who === 'John' }" @click="newPurchase.who = 'John'">👨 John</button>
+                        <button type="button" class="who-option" :class="{ active: newPurchase.who === 'Jane' }" @click="newPurchase.who = 'Jane'">👩 Jane</button>
                     </div>
                 </div>
                 <button class="add-btn" @click="addPurchase">+ add purchase</button>
@@ -607,7 +607,7 @@
                 <li v-for="(p, index) in sortedPurchases" :key="p.id" class="purchase-item">
                     <div class="purchase-left">
                         <span class="purchase-cat">{{ categoryName(p.categoryId) }}</span>
-                        <span class="purchase-who">{{ p.who === 'Jordon' ? '👨 Jordon' : '👩 Tiffany' }}</span>
+                        <span class="purchase-who">{{ p.who === 'John' ? '👨 John' : '👩 Jane' }}</span>
                         <span class="purchase-name">{{ p.description }}</span>
                     </div>
                     <div><span class="purchase-amount">${{ p.amount.toFixed(2) }}</span><button class="delete-btn" @click="deletePurchase(index, p.id)">✕</button></div>
@@ -670,7 +670,7 @@
         </div>
     </div>
 
-    <div class="footer-note">Jordon & Tiffany · data stays in browser</div>
+    <div class="footer-note">John & Jane · data stays in browser</div>
 </div>
 
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -693,7 +693,7 @@
             const categories = ref([]);
             const purchases = ref([]);
             const newPurchase = reactive({
-                description: '', amount: null, categoryId: '', who: 'Jordon'
+                description: '', amount: null, categoryId: '', who: 'John'
             });
             const newCategoryName = ref('');
 
@@ -833,3 +833,4 @@
 </script>
 </body>
 </html>
+
