@@ -125,6 +125,11 @@
         .btn-outline:hover {
             background: #e3edf5;
         }
+        .btn-outline.accent {
+            background: #1b3d5c;
+            border-color: #143649;
+            color: white;
+        }
         .reset-btn {
             background: none;
             border: 1px solid #cbd5e1;
@@ -138,7 +143,26 @@
         .reset-btn:hover {
             background: #eef2f6;
         }
-        /* categories grid */
+        .export-import {
+            display: flex;
+            gap: 10px;
+            margin: 12px 0 6px;
+            flex-wrap: wrap;
+        }
+        .export-import button {
+            background: #e6effa;
+            border: 1px solid #b1cbe2;
+            border-radius: 40px;
+            padding: 10px 20px;
+            font-weight: 500;
+            color: #1b4e79;
+            cursor: pointer;
+            flex: 1;
+            font-size: 0.95rem;
+        }
+        .export-import button:hover {
+            background: #d2e2f5;
+        }
         .category-grid {
             display: flex;
             flex-direction: column;
@@ -450,7 +474,6 @@
         .new-cat-row button:hover {
             background: #0f3a57;
         }
-        /* income & bills page */
         .summary-card {
             background: linear-gradient(145deg, #e7f0fa, #ffffff);
             border-radius: 28px;
@@ -528,6 +551,9 @@
             padding: 0 6px;
         }
         .inline-delete:hover { color: #b12626; }
+        .file-input {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -542,6 +568,14 @@
             <button :class="{ active: currentPage === 'expenses' }" @click="currentPage = 'expenses'">📊 Expenses</button>
             <button :class="{ active: currentPage === 'income' }" @click="currentPage = 'income'">💰 Income & Bills</button>
         </div>
+        
+        <!-- EXPORT/IMPORT BUTTONS - always visible -->
+        <div class="export-import">
+            <button @click="exportData">📤 Export Data</button>
+            <button @click="triggerImport">📥 Import Data</button>
+            <input type="file" ref="fileInput" class="file-input" accept=".json" @change="importData">
+        </div>
+        
         <div class="fortnight-badge" v-if="currentPage === 'expenses'">
             <span>⏳ fortnight</span> <strong>Feb 24</strong> · <span>to</span> <strong>Mar 10</strong>
         </div>
@@ -622,8 +656,8 @@
         <div class="card">
             <div class="summary-card">
                 <div class="summary-row"><span>💰 Fortnightly income:</span> <span>${{ totalIncome }}</span></div>
-                <div class="summary-row"><span>📅 Fortnightly bills:</span> <span>${{ totalBillsFortnight }}</span></div>
-                <div class="summary-row remaining"><span>✅ Left over:</span> <span>${{ totalIncome - totalBillsFortnight }}</span></div>
+                <div class="summary-row"><span>📅 Fortnightly bills:</span> <span>${{ totalBillsFortnight.toFixed(2) }}</span></div>
+                <div class="summary-row remaining"><span>✅ Left over:</span> <span>${{ (totalIncome - totalBillsFortnight).toFixed(2) }}</span></div>
             </div>
 
             <h2 style="margin-bottom: 12px;">➕ Income sources</h2>
@@ -670,7 +704,7 @@
         </div>
     </div>
 
-    <div class="footer-note">John & Jane · data stays in browser</div>
+    <div class="footer-note">John & Jane · Export/import to share data</div>
 </div>
 
 <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -687,21 +721,19 @@
 
     const app = createApp({
         setup() {
-            const currentPage = ref('expenses'); // 'expenses' or 'income'
-
-            // categories & purchases
+            const currentPage = ref('expenses');
             const categories = ref([]);
             const purchases = ref([]);
-            const newPurchase = reactive({
-                description: '', amount: null, categoryId: '', who: 'John'
-            });
+            const newPurchase = reactive({ description: '', amount: null, categoryId: '', who: 'John' });
             const newCategoryName = ref('');
 
-            // income & bills
             const incomeSources = ref([]);
             const bills = ref([]);
             const newIncome = reactive({ name: '', amount: null });
             const newBill = reactive({ name: '', amount: null, frequency: 'monthly', nextDate: '' });
+
+            // file import ref
+            const fileInput = ref(null);
 
             // static fortnight display
             const fortnightStart = 'Feb 24';
@@ -795,15 +827,13 @@
             }
             function deleteBill(idx) { bills.value.splice(idx,1); saveToLocal(); }
 
-            // total bills per fortnight (monthly * 12 / 26)
             const totalBillsFortnight = computed(() => {
                 return bills.value.reduce((sum, b) => {
                     if (b.frequency === 'fortnightly') return sum + b.amount;
-                    else return sum + (b.amount * 12 / 26); // monthly to fortnightly
+                    else return sum + (b.amount * 12 / 26);
                 }, 0);
             });
 
-            // next bill reminder
             const nextBillReminder = computed(() => {
                 if (!bills.value.length) return 'no bills';
                 const today = new Date();
@@ -815,6 +845,68 @@
                 return nearest ? nearest.toLocaleDateString('en-US',{month:'short', day:'numeric'}) : 'add dates';
             });
 
+            // ----- EXPORT / IMPORT -----
+            function exportData() {
+                const data = {
+                    categories: categories.value,
+                    purchases: purchases.value,
+                    incomeSources: incomeSources.value,
+                    bills: bills.value,
+                    exportDate: new Date().toISOString()
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `expense-tracker-backup-${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            function triggerImport() {
+                fileInput.value.click();
+            }
+
+            function importData(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        
+                        // validate basic structure
+                        if (data.categories && Array.isArray(data.categories)) {
+                            categories.value = data.categories.map(c => ({ ...c, spent: c.spent || 0 }));
+                        }
+                        if (data.purchases && Array.isArray(data.purchases)) {
+                            purchases.value = data.purchases;
+                        }
+                        if (data.incomeSources && Array.isArray(data.incomeSources)) {
+                            incomeSources.value = data.incomeSources;
+                        }
+                        if (data.bills && Array.isArray(data.bills)) {
+                            bills.value = data.bills;
+                        }
+                        
+                        // ensure category selection
+                        if (categories.value.length && !newPurchase.categoryId) {
+                            newPurchase.categoryId = categories.value[0].id;
+                        }
+                        
+                        recalcSpent();
+                        alert('Data imported successfully!');
+                    } catch (err) {
+                        alert('Invalid file format. Please select a valid backup file.');
+                        console.error(err);
+                    }
+                    // reset file input so same file can be chosen again
+                    event.target.value = '';
+                };
+                reader.readAsText(file);
+            }
+
             onMounted(() => { loadFromLocal(); recalcSpent(); });
             watch([categories, purchases, incomeSources, bills], saveToLocal, { deep: true });
 
@@ -825,7 +917,8 @@
                 addPurchase, deletePurchase, resetFortnight, addNewCategoryPrompt,
                 commitNewCategory, removeCategory, updateStorage, progressPercent,
                 categoryName, sortedPurchases, addIncome, deleteIncome, totalIncome,
-                addBill, deleteBill, totalBillsFortnight, nextBillReminder
+                addBill, deleteBill, totalBillsFortnight, nextBillReminder,
+                exportData, triggerImport, importData, fileInput
             };
         }
     });
@@ -833,4 +926,3 @@
 </script>
 </body>
 </html>
-
